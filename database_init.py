@@ -1,32 +1,50 @@
 # This is a sample Python script.
-import mysql.connector
-import database
+import sqlite3
+import secrets
 import re
+# plugin - SimpleSqliteBrowser
 
-# Create the database and cursor
-db_name = "Taylor_Swift"
-mydb = mysql.connector.connect(
-    host="localhost",
-    port=3306,
-    user=database.username,
-    password=database.password,
-    database=db_name
-)
-mycursor = mydb.cursor()
+def _connect():
+    return sqlite3.connect(secrets.db_path)
+def table_validation(table):
+    approved = False
+    allow_tb_list = ["Albums",
+                     "Taylor Swift",
+                     "Fearless",
+                     "Speak Now",
+                     "Red",
+                     "1989",
+                     "Reputation",
+                     "Lover",
+                     "Folklore",
+                     "Evermore",
+                     "Midnights",
+                     "THE TORTURED POETS DEPARTMENT",
+                     ""
+                     ]
+    illegal_char = ["\\", "/", "LIKE", "like"]
+    for char in illegal_char:
+        if char in table:
+            return False
+        if table in allow_tb_list:
+            approved = True
+    return approved
+
 #----------------VARIABLES-------------------
 # All album data song length is given in seconds
-all_albums = [("Taylor Swift", "2006"),
-#              ("Fearless", "2008"),
-              ("Speak Now", "2010"),
-#              ("Red", "2012"),
-              ("1989", "2014"),
-              ("Reputation", "2017"),
-              ("Lover", "2019"),
-              ("Folklore", "2020"),
-              ("Evermore", "2020"),
-#              ("Midnights", "2022"),
-              ("THE TORTURED POETS DEPARTMENT", "2024"),
+all_albums = [("Taylor Swift", "2006", "Green"),
+              ("Fearless", "2008", "Yellow"),
+              ("Speak Now", "2010", "Purple"),
+              ("Red", "2012", "Red"),
+              ("1989", "2014", "Light Blue"),
+              ("Reputation", "2017", "Black"),
+              ("Lover", "2019", "Pink"),
+              ("Folklore", "2020", "Grey"),
+              ("Evermore", "2020", "Orange"),
+              ("Midnights", "2022", "Navy Blue"),
+              ("THE TORTURED POETS DEPARTMENT", "2024", "White"),
               ]
+
 fearless_data = [
                 ("Fearless", "241"),
                 ("Fifteen", "294"),
@@ -86,52 +104,61 @@ def seconds_song_time(time):
 
 def song_time_to_seconds(time):
     minute_pattern = "(\d*):(\d*)"
-    minute_matches = re.findall(minute_pattern, test_time)
+    minute_matches = re.findall(minute_pattern, time)
     total = (int(minute_matches[0][0]) * 60) + int(minute_matches[0][1])
     return total
 
 
 # ------------- DATABASE FUNCTIONS----------------
-def show_database(cursor):
-    mycursor.execute("SHOW DATABASES")
-    for db in cursor:
-        print(db)
+def create_populate_album_table():
+    sqlformula_add_albums = "INSERT INTO Albums (Name, Year, Color) Values (%, %, %)"
+    with _connect() as conn:
+        my_cursor = conn.cursor
+        my_cursor.execute("""CREATE TABLE 'Albums' (
+                              al_id INTEGER PRIMARY KEY,
+                              Name text,
+                              Year INTEGER,
+                              Color text,
+                              """)
+        for db in my_cursor:
+            print(db)
+        for name in all_albums:
+            print(name[0])
+            my_cursor.execute(sqlformula_add_albums, (name[0], name[0], name[0]))
 
-def show_tables(cursor):
-    mycursor.execute("SHOW TABLES")
-    for tb in cursor:
+
+def show_database():
+    with _connect() as conn:
+        my_cursor = conn.cursor
+        my_cursor.execute("SHOW DATABASES")
+        for db in my_cursor:
+            print(db)
+
+
+def show_tables():
+    with _connect() as conn:
+        my_cursor = conn.cursor()
+        my_cursor.execute("SHOW TABLES")
+    for tb in my_cursor:
         print(tb)
 
 
-
 # use the following function ONCE with the all_albums variable -- it will create the tables for you
-def create_tables_for_albums(list):
-    for album in list:
-        create_table = "CREATE TABLE " + album[0] + " (Track VARCHAR(255), Length INT(4))"
-        mycursor.execute(create_table)
-        print(create_table)
-        mydb.commit()
-# mycursor.execute("CREATE TABLE Albums (Name VARCHAR(255), Year INT(4))")
-# mycursor.execute("CREATE TABLE Fearless (Track VARCHAR(255), Length INT(4))")
-# mycursor.execute("SHOW TABLES")
-# show_database(mycursor)
-show_tables(mycursor)
-print("==============")
-mycursor.execute("SELECT * FROM Albums")
-myresult = mycursor.fetchall()
-for column in myresult:
-    pass
-    # print(column)
-sqlFormual_add_albums = "INSERT INTO Albums (Name, Year) Values (%s, %s)"
-
-sqlFormula_add_songs = "INSERT INTO Fearless (Track, Length) VALUES (%s, %s)"
-
-def add_album_data():
-    pass
-# for item in fearless_data:
-#    mycursor.execute(sqlFormula_add_songs, item)
-# mydb.commit()
+def create_tables_for_all_albums(album_list):
+    for album in album_list:
+        if table_validation(album) is True:
+            with _connect() as conn:
+                my_cursor = conn.cursor()
+                create_table = "CREATE TABLE " + album[0] + " (Track VARCHAR(255), Length INT(4))"
+                my_cursor.execute(create_table)
+                print(create_table)
+        else:
+            print(album[0] + " is not a valid table")
 
 
-create_tables_for_albums(all_albums)
-print("nothing")
+def populate_album_tables(album_data):
+    with _connect() as conn:
+        my_cursor = conn.cursor()
+        sqlformula_add_songs = "INSERT INTO " + variable + " (Track, Length) VALUES (?, ?)"
+        for song in album_data:
+            my_cursor.execute(sqlformula_add_songs, (song[0], song[1]))
