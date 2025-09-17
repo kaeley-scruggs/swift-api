@@ -25,10 +25,11 @@ def table_validation(table):
     illegal_char = ["\\", "/", "LIKE", "like"]
     for char in illegal_char:
         if char in table:
-            return False
+            return approved
         if table in allow_tb_list:
             approved = True
     return approved
+
 
 #----------------VARIABLES-------------------
 # All album data song length is given in seconds
@@ -78,7 +79,9 @@ red_data = [
             ("Starlight", "217"),
             ("Begin Again", "237"),
             ]
-midnights_data = [("Lavender Haze", "202"),
+midnights_data1 = {
+    "album_name": "Midnights",
+    "song_list": [("Lavender Haze", "202"),
                   ("Maroon", "218"),
                   ("Anti-Hero", "200"),
                   ("Snow On the Beach (feat. Lana Del Rey", "256"),
@@ -91,7 +94,8 @@ midnights_data = [("Lavender Haze", "202"),
                   ("Karma", "204"),
                   ("Sweet Nothing", "188"),
                   ("Mastermind", "191"),
-                  ]
+                  ],
+    }
 
 
 # -------------BEGIN FUNCTIONS------------------
@@ -113,7 +117,7 @@ def song_time_to_seconds(time):
 def create_populate_album_table():
     sqlformula_add_albums = "INSERT INTO Albums (Name, Year, Color) Values (%, %, %)"
     with _connect() as conn:
-        my_cursor = conn.cursor
+        my_cursor = conn.cursor()
         my_cursor.execute("""CREATE TABLE 'Albums' (
                               al_id INTEGER PRIMARY KEY,
                               Name text,
@@ -127,9 +131,10 @@ def create_populate_album_table():
             my_cursor.execute(sqlformula_add_albums, (name[0], name[0], name[0]))
 
 
+create_populate_album_table()
 def show_database():
     with _connect() as conn:
-        my_cursor = conn.cursor
+        my_cursor = conn.cursor()
         my_cursor.execute("SHOW DATABASES")
         for db in my_cursor:
             print(db)
@@ -155,10 +160,30 @@ def create_tables_for_all_albums(album_list):
         else:
             print(album[0] + " is not a valid table")
 
-
+midnights_data = {
+    "album_name": "Midnights",
+    "song_list": [("Lavender Haze", "202"),
+                  ("Maroon", "218"),
+                  ("Anti-Hero", "200"),
+                  ("Snow On the Beach (feat. Lana Del Rey", "256"),
+                  ("You're On Your Own, Kid", "194"),
+                  ("Midnight Rain", "174"),
+                  ("Quesiton...?", "219"),
+                  ("Vigilante Shit", "164"),
+                  ("Bejewled", "194"),
+                  ("Labyrinth", "247"),
+                  ("Karma", "204"),
+                  ("Sweet Nothing", "188"),
+                  ("Mastermind", "191"),
+                  ],
+    }
 def populate_album_tables(album_data):
     with _connect() as conn:
         my_cursor = conn.cursor()
-        sqlformula_add_songs = "INSERT INTO " + variable + " (Track, Length) VALUES (?, ?)"
-        for song in album_data:
-            my_cursor.execute(sqlformula_add_songs, (song[0], song[1]))
+        sqlformula_add_songs = "INSERT INTO " + album_data["album_name"] + " (Track, Length) VALUES (?, ?)"
+        for song in album_data[1]:
+            print("formula:", sqlformula_add_songs)
+            print("+++++++++++++++++++++++++++++++++++++")
+            print("data:", (song[0], song[1]))
+
+populate_album_tables(midnights_data)
