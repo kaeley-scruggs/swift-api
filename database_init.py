@@ -115,20 +115,21 @@ def song_time_to_seconds(time):
 
 # ------------- DATABASE FUNCTIONS----------------
 def create_populate_album_table():
-    sqlformula_add_albums = "INSERT INTO Albums (Name, Year, Color) Values (%, %, %)"
+    sqlformula_add_albums = "INSERT INTO Albums (Name, Year, Color) Values (?, ?, ?)"
     with _connect() as conn:
         my_cursor = conn.cursor()
         my_cursor.execute("""CREATE TABLE 'Albums' (
                               al_id INTEGER PRIMARY KEY,
                               Name text,
                               Year INTEGER,
-                              Color text,
+                              Color text
+                              )
                               """)
         for db in my_cursor:
             print(db)
         for name in all_albums:
             print(name[0])
-            my_cursor.execute(sqlformula_add_albums, (name[0], name[0], name[0]))
+            my_cursor.execute(sqlformula_add_albums, (name[0], name[1], name[2]))
 
 
 create_populate_album_table()
@@ -181,9 +182,8 @@ def populate_album_tables(album_data):
     with _connect() as conn:
         my_cursor = conn.cursor()
         sqlformula_add_songs = "INSERT INTO " + album_data["album_name"] + " (Track, Length) VALUES (?, ?)"
-        for song in album_data[1]:
+        for song in album_data["song_list"]:
             print("formula:", sqlformula_add_songs)
             print("+++++++++++++++++++++++++++++++++++++")
             print("data:", (song[0], song[1]))
-
-populate_album_tables(midnights_data)
+            my_cursor.execute(sqlformula_add_songs, (song[0], song[1]))
