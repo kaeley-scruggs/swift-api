@@ -20,6 +20,7 @@ def table_validation(table):
                      "Evermore",
                      "Midnights",
                      "THE TORTURED POETS DEPARTMENT",
+                     "The Life of a Showgirl",
                      ""
                      ]
     illegal_char = ["\\", "/", "LIKE", "like"]
@@ -34,20 +35,22 @@ def table_validation(table):
 #----------------VARIABLES-------------------
 # All album data song length is given in seconds
 all_albums = [("Taylor Swift", "2006", "Green"),
-              ("Fearless", "2008", "Yellow"),
-              ("Speak Now", "2010", "Purple"),
-              ("Red", "2012", "Red"),
-              ("1989", "2014", "Light Blue"),
-              ("Reputation", "2017", "Black"),
-              ("Lover", "2019", "Pink"),
-              ("Folklore", "2020", "Grey"),
-              ("Evermore", "2020", "Orange"),
-              ("Midnights", "2022", "Navy Blue"),
-              ("THE TORTURED POETS DEPARTMENT", "2024", "White"),
+            ("Fearless", "2008", "Yellow"),
+            ("Speak Now", "2010", "Purple"),
+            ("Red", "2012", "Red"),
+            ("1989", "2014", "Light Blue"),
+            ("Reputation", "2017", "Black"),
+            ("Lover", "2019", "Pink"),
+            ("Folklore", "2020", "Grey"),
+            ("Evermore", "2020", "Burnt Orange"),
+            ("Midnights", "2022", "Navy Blue"),
+            ("THE TORTURED POETS DEPARTMENT", "2024", "White"),
+            ("The Life of a Showgirl", "2025", "Orange"),
               ]
 
-fearless_data = [
-                ("Fearless", "241"),
+fearless_data = {
+    "album_name": "Fearless",
+    "song_list": [("Fearless", "241"),
                 ("Fifteen", "294"),
                 ("Love Story", "235"),
                 ("Hey Stephen", "254"),
@@ -61,8 +64,11 @@ fearless_data = [
                 ("The Best Day", "245"),
                 ("Change", "280"),
                 ]
-red_data = [
-            ("State of Grace", "295"),
+}
+
+red_data = {
+    "album_name": "Red",
+    "song_list": [("State of Grace", "295"),
             ("Red", "220"),
             ("Treacherous", "240"),
             ("I Knew You Were Trouble.", "217"),
@@ -79,7 +85,9 @@ red_data = [
             ("Starlight", "217"),
             ("Begin Again", "237"),
             ]
-midnights_data1 = {
+}
+
+midnights_data = {
     "album_name": "Midnights",
     "song_list": [("Lavender Haze", "202"),
                   ("Maroon", "218"),
@@ -132,7 +140,20 @@ def create_populate_album_table():
             my_cursor.execute(sqlformula_add_albums, (name[0], name[1], name[2]))
 
 
-create_populate_album_table()
+def table_exists(table_name):
+    with _connect() as conn:
+        my_cursor = conn.cursor()
+        if table_validation(table_name) is True:
+            my_cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+            table = my_cursor.fetchone()
+            if table is None:
+                return False
+            else:
+                return True
+        else:
+            return "This is not a valid table"
+
+
 def show_database():
     with _connect() as conn:
         my_cursor = conn.cursor()
@@ -149,41 +170,22 @@ def show_tables():
         print(tb)
 
 
-# use the following function ONCE with the all_albums variable -- it will create the tables for you
-def create_tables_for_all_albums(album_list):
-    for album in album_list:
-        if table_validation(album) is True:
-            with _connect() as conn:
-                my_cursor = conn.cursor()
-                create_table = "CREATE TABLE " + album[0] + " (Track VARCHAR(255), Length INT(4))"
-                my_cursor.execute(create_table)
-                print(create_table)
-        else:
-            print(album[0] + " is not a valid table")
-
-midnights_data = {
-    "album_name": "Midnights",
-    "song_list": [("Lavender Haze", "202"),
-                  ("Maroon", "218"),
-                  ("Anti-Hero", "200"),
-                  ("Snow On the Beach (feat. Lana Del Rey", "256"),
-                  ("You're On Your Own, Kid", "194"),
-                  ("Midnight Rain", "174"),
-                  ("Quesiton...?", "219"),
-                  ("Vigilante Shit", "164"),
-                  ("Bejewled", "194"),
-                  ("Labyrinth", "247"),
-                  ("Karma", "204"),
-                  ("Sweet Nothing", "188"),
-                  ("Mastermind", "191"),
-                  ],
-    }
-def populate_album_tables(album_data):
+def populate_album_table(album_data):
     with _connect() as conn:
         my_cursor = conn.cursor()
-        sqlformula_add_songs = "INSERT INTO " + album_data["album_name"] + " (Track, Length) VALUES (?, ?)"
-        for song in album_data["song_list"]:
-            print("formula:", sqlformula_add_songs)
-            print("+++++++++++++++++++++++++++++++++++++")
-            print("data:", (song[0], song[1]))
-            my_cursor.execute(sqlformula_add_songs, (song[0], song[1]))
+        if table_exists(album_data["album_name"]) is True:
+            print("table exists")
+            for song in album_data["song_list"]:
+                sqlformula_add_songs = "INSERT INTO " + album_data["album_name"] + " (Track, Length) VALUES (?, ?)"
+                my_cursor.execute(sqlformula_add_songs, (song[0], song[1]))
+        else:
+            my_cursor.execute(f"""CREATE TABLE {album_data["album_name"]} (
+                                  al_id INTEGER PRIMARY KEY,
+                                  Track text,
+                                  Length INTEGER
+                                  )
+                                  """)
+            sqlformula_add_songs = "INSERT INTO " + album_data["album_name"] + " (Track, Length) VALUES (?, ?)"
+            for song in album_data["song_list"]:
+                print(f"add {song[0]} and {song[1]} into table")
+                my_cursor.execute(sqlformula_add_songs, (song[0], song[1]))
